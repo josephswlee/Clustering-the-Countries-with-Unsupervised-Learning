@@ -1,0 +1,62 @@
+---
+title: "DS3001 Final Project"
+author: "Joseph Lee (sl5nj), Iain Muir (iam9ez), Kent Williams (kbw3bb)"
+date: "12/5/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE}
+library(randomForest)
+library(rio)
+library(plyr)
+library(tidyverse)
+library(rpart)
+library(psych)
+library(pROC)
+library(rpart.plot)
+library(rattle)
+library(caret)
+library(mlbench)
+library(MLmetrics)
+library(ROCR)
+library(mltools)
+library(data.table)
+library(plotly)
+```
+
+```{r}
+data <- read_csv("~/Dev/DS3001/3001_handsOn/project/Depression-Project/dass.csv")
+dass = data
+dass[dass == ""] <- NA #replace empty string to NA
+#View(dass)
+str(dass)
+dass <- dass[complete.cases(dass),]
+(column_index <- tibble(colnames(dass)))
+
+```
+
+```{r}
+(column_index <- tibble(colnames(dass)))
+
+#dass[,c(2,4,6,7,8,9,10,14,15)] <- lapply(dass[,c(2,4,6,7,8,9,10,14,15)], as.factor)
+dass$country <- as.factor(dass$country)
+dass$education <- as.factor(dass$education) # 1=less than hs 2= hs 3=university 4=graduate
+dass$urban <- as.factor(dass$urban) # area grew up 1=rural 2=suburban 3=urban
+dass$gender <- as.factor(dass$gender) # 1=male 2=female 3=other
+dass$engnat <- as.factor(dass$engnat) # english native language 1=yes 2=no
+dass$religion <- as.factor(dass$religion) # 1=agnostic 2=atheist 3=buddhist 4=catholic 5=mormon 6=protestant 7=christian(other) 8=hindu 9=jewish 10=muslim 11=sikh 12=other
+dass$orientation <- as.factor(dass$orientation) # sexual orientation 1=hetero 2=bi 3=homo 4=a 5=other
+dass$race <- as.factor(dass$race) # 10=asian 20=arab 30=black 40=indigenous austrailian 50=native american 60=white 70=other
+dass$voted <- as.factor(dass$voted) # 1=yes 2=no
+dass$married <- as.factor(dass$married) # 1=never married 2=currently married 3= previously married
+dass$major <- as.factor(dass$major)
+
+str(dass)
+```
+
