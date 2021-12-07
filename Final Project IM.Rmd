@@ -31,6 +31,10 @@ library(ROCR)
 library(mltools)
 library(data.table)
 library(plotly)
+library(e1071)
+library(htmltools)
+library(devtools)
+library(NbClust)
 ```
 
 ## Step 1 — Load Data
@@ -175,8 +179,23 @@ s <- ifelse(substr(col_vect, 2, nchar(col_vect) - 1) %in% stress, col_vect, NA)
 s <- s[!is.na(s)]
 ```
 
+```{r}
+depression_df = dass[, d]
+anxiety_df = dass[, a]
+stress_df = dass[, s]
+```
+
+```{r}
+depression_df
+```
+
 
 ## Logistic Regresion
+```{r include=FALSE}
+
+```
+
+## K-Nearest Neighbors
 ```{r include=FALSE}
 
 ```
