@@ -1,0 +1,314 @@
+---
+title: "DS 3001 Final Project"
+author: "Joseph Lee (sl5nj), Iain Muir (iam9ez), Kent Williams (kbw3bb)"
+date: "12/6/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PROJECT DESCRIPTION
+
+**Objective:**  
+To categorize the countries using socio-economic and health factors that determine the overall development of the country.
+
+**Problem Statement:**  
+HELP International have been able to raise around $ 10 million. Now the CEO of the NGO needs to decide how to use this money strategically and effectively. So, CEO has to make decision to choose the countries that are in the direst need of aid. Hence, your Job as a Data scientist is to categorise the countries using some socio-economic and health factors that determine the overall development of the country. Then you need to suggest the countries which the CEO needs to focus on the most.
+
+**Context:**  
+HELP International is an international humanitarian NGO that is committed to fighting poverty and providing the people of backward countries with basic amenities and relief during the time of disasters and natural calamities.
+
+## DATA PREPARATION 
+### Step 0 — Import Libraries
+e1071, tidyverse, plotly, htmltools, devtools, caret, NbClust, reshape2, rvest, magrittr, stringr, cowplot, ggmap
+
+```{r include=FALSE}
+# Import necessary packages
+library(e1071)
+library(tidyverse)
+library(plotly)
+library(htmltools)
+library(devtools)
+library(caret)
+library(NbClust)
+library(reshape2)
+library(rvest)
+library(magrittr)
+library(stringr)
+
+# remotes::install_version("cowplot", "0.9.2")
+library(cowplot)
+# install.packages('ggmap')
+library(ggmap)
+
+```
+
+### Step 1 — Load Data
+Data is sourced from [Kaggle](https://www.kaggle.com/rohan0301/unsupervised-learning-on-country-data?select=data-dictionary.csv)
+
+**DATA DICTIONARY**  
+* country: Name of the country
+* child_mort: Death of children under 5 years of age per 1000 live births
+* exports: Exports of goods and services per capita. Given as %age of the GDP per capita
+* health: Total health spending per capita. Given as %age of GDP per capita
+* imports: Imports of goods and services per capita. Given as %age of the GDP per capita
+* income: Net income per person
+* inflation: The measurement of the annual growth rate of the Total GDP
+* life_expec: The average number of years a new born child would live if the current mortality patterns are to remain the same
+* total_fer: The number of children that would be born to each woman if the current age-fertility rates remain the same.
+* gdpp: The GDP per capita. Calculated as the Total GDP divided by the total population.
+
+```{r include=FALSE}
+# Read csv, save a copy of the data set
+data <- read_csv('/Users/iainmuir/Desktop/4Y 1S/DS 3001/Depression-Project/Country-data.csv')
+countries = data
+```
+
+Peep First Five Rows
+```{r echo=FALSE}
+# Output First 5 Rows of Raw Data
+head(countries)
+```
+
+Data Dimensions
+```{r echo=FALSE}
+# Output Statistics Data Set Dimensions and Columns
+cat('Shape:', dim(countries))
+cat('Columns:', names(countries))
+```
+
+Remove Country Names...
+```{r echo=FALSE}
+# Remove country names from the dataset, save as vector for visualization at the end
+country_labels <- countries$country
+countries <- countries[,-1]
+cat("Country Labels:", paste(shQuote(country_labels[1:5]), collapse=", "), "...")
+```
+
+```{r include=FALSE}
+# Output the Index of Columns for reference
+column_index <- tibble(colnames(countries))
+column_index
+```
+
+### Step 2 — Check for Missing Values
+
+```{r include=FALSE}
+# Mising Values by Column
+na_count <-sapply(countries, function(y) sum(length(which(is.na(y)))))
+na_count <- data.frame(na_count)
+na_count
+```
+
+```{r echo=FALSE}
+# Total Missing Values
+cat("Total Missing Values:", sum(na_count$na_count))
+```
+
+### Step 3 — Ensure Correct Data Types
+No chr variables to convert to factor
+```{r echo=FALSE}
+# Output Data Set Structure
+str(countries)
+```
+
+### Step 4 — Explore Data Distributions
+Commentary...  
+
+Scatter Matrix  
+```{r echo=FALSE}
+# Plot a colored Scatter Matrix
+plot(
+  countries, 
+  pch=20, 
+  cex=1.5, 
+  col="#69b3a2"
+)
+```
+
+Histogram Matrix  
+```{r echo=FALSE}
+# Grid plot Histograms of each variable
+p1 <- ggplot(countries, aes(x=child_mort)) + geom_histogram(bins=30)
+p2 <- ggplot(countries, aes(x=exports)) + geom_histogram(bins=30)
+p3 <- ggplot(countries, aes(x=health)) + geom_histogram(bins=30)
+p4 <- ggplot(countries, aes(x=imports)) + geom_histogram(bins=30)
+p5 <- ggplot(countries, aes(x=income)) + geom_histogram(bins=30)
+p6 <- ggplot(countries, aes(x=inflation)) + geom_histogram(bins=30)
+p7 <- ggplot(countries, aes(x=life_expec)) + geom_histogram(bins=30)
+p8 <- ggplot(countries, aes(x=total_fer)) + geom_histogram(bins=30)
+p9 <- ggplot(countries, aes(x=gdpp)) + geom_histogram(bins=30)
+
+plot_grid(
+  p1, p2, p3, p4, p5, p6, p7, p8, p9,
+  label_size=12
+)
+```
+
+Correlation Matrix  
+```{r include=FALSE}
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+    cormat[lower.tri(cormat)]<- NA
+    return(cormat)
+}
+reorder_cormat <- function(cormat){
+    # Use correlation between variables as distance
+    dd <- as.dist((1-cormat)/2)
+    hc <- hclust(dd)
+    cormat <-cormat[hc$order, hc$order]
+}
+```
+
+[src](http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization)  
+```{r echo=FALSE}
+# Reorder the correlation matrix
+cormat <- round(cor(countries), 2)
+cormat <- reorder_cormat(cormat)
+upper_tri <- get_upper_tri(cormat)
+
+# Melt the correlation matrix
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+
+# Create a ggheatmap
+ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
+     geom_tile(color = "white") +
+     scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+       midpoint = 0, limit = c(-1,1), space = "Lab", 
+        name="Pearson\nCorrelation") +
+      theme_minimal()+ # minimal theme
+     theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+        size = 12, hjust = 1)) +
+     coord_fixed()
+
+# Add Text
+ggheatmap + 
+geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      legend.justification = c(1, 0),
+      legend.position = c(0.6, 0.7),
+      legend.direction = "horizontal")+
+      guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                    title.position = "top", title.hjust = 0.5))
+```
+
+### Step 5 — Normalize the Data
+```{r include=FALSE}
+# Min Max Scaler Function
+normalize <- function(x){
+ (x - min(x)) / (max(x) - min(x))
+}
+```
+
+```{r include=FALSE}
+# Subset Numeric Variables and Apply Normalize Function to Each Column
+num_fields = names(select_if(countries, is.numeric))
+countries[num_fields] <- as_tibble(lapply(countries[num_fields], normalize))
+```
+
+```{r echo=FALSE}
+# Output First 5 Rows of Raw Data
+head(countries)
+```
+
+## UNSUPERVISED MACHINE LEARNING: K-Means Clustering
+
+### Step 6 — Initial K-Means Model
+```{r include=FALSE}
+# Set Random State Seed
+set.seed(42)
+```
+
+```{r include=FALSE}
+# Run Initial K-Means with 2 center
+country_kmeans = kmeans(
+  countries,
+  centers=3,
+  algorithm="Lloyd"
+) 
+```
+
+```{r include=FALSE}
+# Output K-Means Model Information
+head(country_kmeans)
+```
+
+```{r echo=FALSE}
+# Create Cluster Data set
+clusters_ <- country_kmeans$cluster
+cluster_df <- data.frame(
+    country_labels, clusters_
+)
+cluster_df$clusters <- as.factor(cluster_df$clusters)
+head(cluster_df)
+```
+
+### Step 6 — Visualize Clusters on World Map
+```{r include=FALSE}
+map.world <- map_data("world")
+```
+
+Recode Country Names to Align Between Files
+```{r include=FALSE}
+map.world$region <- recode(
+  map.world$region,
+  'Antigua' = 'Antigua and Barbuda',
+  'Republic of Congo' = 'Congo, Rep.',
+  'Democratic Republic of the Congo' = 'Congo, Dem. Rep.',
+  'Ivory Coast' = "Cote d'Ivoire",
+  'Kyrgyzstan' = 'Kyrgyz Republic',
+  'Laos' = 'Lao',
+  'Micronesia' = 'Micronesia, Fed. Sts.',
+  'North Macedonia' = 'Macedonia, FYR',
+  'Slovakia' = 'Slovak Republic',
+  'USA' = 'United States',
+  'UK' = 'United Kingdom'
+)
+```
+
+```{r include=FALSE}
+map.world_joined <- left_join(
+    map.world, cluster_df, by=c('region' = 'country_labels')
+)
+map.world_joined <- map.world_joined %>% drop_na(clusters)
+head(map.world_joined)
+```
+
+[src](https://www.sharpsightlabs.com/blog/map-talent-competitiveness/)  
+```{r echo=FALSE}
+# Plot World Map
+ggplot() +
+  geom_polygon(
+      data=map.world_joined,
+      aes(
+        x=long, 
+        y=lat, 
+        group=group, 
+        fill=clusters
+      )
+  ) +
+  # geom_point(data = df.country_points, aes(x = lon, y = lat), color = "#e60000") +
+  # scale_fill_manual(values = c("#CCCCCC","#000000")) +
+  labs(title='Socio-Economic Clusters') +
+  theme(
+      text = element_text(family="Gill Sans", color="#000000"),
+      panel.grid = element_blank(),
+      plot.title = element_text(size = 30),
+      plot.subtitle = element_text(size = 10),
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+  )
+```
+
+
