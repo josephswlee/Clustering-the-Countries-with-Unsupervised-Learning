@@ -56,20 +56,20 @@ SEED = 42
 ### Step 1 — Load Data
 
 **DATA DICTIONARY**  
-* country: Name of the country  
-* child_mort: Death of children under 5 years of age per 1000 live births  
-* exports: Exports of goods and services per capita. Given as %age of the GDP per capita  
-* health: Total health spending per capita. Given as %age of GDP per capita  
-* imports: Imports of goods and services per capita. Given as %age of the GDP per capita  
-* income: Net income per person  
-* inflation: The measurement of the annual growth rate of the Total GDP  
-* life_expec: The average number of years a new born child would live if the current mortality patterns are to remain the same  
-* total_fer: The number of children that would be born to each woman if the current age-fertility rates remain the same.  
-* gdpp: The GDP per capita. Calculated as the Total GDP divided by the total population.  
+* **country**: Name of the country  
+* **child_mort**: Death of children under 5 years of age per 1000 live births  
+* **exports**: Exports of goods and services per capita. Given as %age of the GDP per capita  
+* **health**: Total health spending per capita. Given as %age of GDP per capita  
+* **imports**: Imports of goods and services per capita. Given as %age of the GDP per capita  
+* **income**: Net income per person  
+* **inflation**: The measurement of the annual growth rate of the Total GDP  
+* **life_expec**: The average number of years a new born child would live if the current mortality patterns are to remain the same  
+* **total_fer**: The number of children that would be born to each woman if the current age-fertility rates remain the same.  
+* **gdpp**: The GDP per capita. Calculated as the Total GDP divided by the total population.  
 
 ```{r include=FALSE}
 # Read csv, save a copy of the data set
-data <- read_csv('~/Dev/DS3001/3001_handsOn/project/Depression-Project/Country-data.csv')
+data <- read_csv('Country-data.csv')
 countries = data
 ```
 
@@ -107,7 +107,8 @@ column_index
 ```
 
 ### Step 2 — Check for Missing Values
-...  
+Our data set luckily does not have any missing values, so we can proceed without any worries that NULL values will hinder our model's performance  
+
 ```{r include=FALSE}
 # Mising Values by Column
 na_count <-sapply(countries, function(y) sum(length(which(is.na(y)))))
@@ -121,16 +122,17 @@ cat("Total Missing Values:", sum(na_count$na_count))
 ```
 
 ### Step 3 — Ensure Correct Data Types
-...  
+In order to optimize the performance of our K-Means algorithm, we need to ensure that all variables are appropriately classified. There are no chr variables to convert to factors, considering we removed the country name for the actual training of the model.
 
-No chr variables to convert to factor
 ```{r echo=FALSE}
 # Output Data Set Structure
 str(countries)
 ```
 
 ### Step 4 — Explore Data Distributions{.tabset}
-...    
+We visualized the correlation between each variables to see the strength of the relationship between each variables. This will give us good indication how would our cluster partition data into groups, which are GDP, life expectancy, and income.  
+
+Additionally, we wanted to plot the distributions of each variables to passively look for outliers and to better understand the data in general.  
 
 #### Scatter Matrix  
 ```{r echo=FALSE}
@@ -215,10 +217,8 @@ geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
 ggheatmap
 ```
 
-We visualized the correlation between each variables to see the strength of the relationship between each variables. This will give us good indication how would our cluster partition data into groups, which are GDP, life expectancy, and income.
-
 ### Step 5 — Normalize the Data
-...  
+We implemented a MinMax Scaler to prepare the data set for the K-Means algorithm. Distance is the central mechanism in which K-Means clusters the data, and therefore we need to ensure everything is on the same scale.  
 
 ```{r include=FALSE}
 # Min Max Scaler Function
@@ -239,8 +239,9 @@ head(countries)
 ```
 
 ## K-MEANS CLUSTERING
+We decided to use K-Means Clustering because our goal is to categorize the countries using socio-economic and health factors that determine the overall development of the country.  
 
-We decided to use K-Means Clustering because our goal is to categorize the countries using socio-economic and health factors that determine the overall development of the country.
+We created K-means model with 2 centers but the variance explained was low at 0.3935. Before we are going to do hyperparameter tuning, we are first going to visualize our model to see how it looks.  
 
 ### Step 6 — Initial K-Means Model
 ```{r include=FALSE}
@@ -262,7 +263,7 @@ country_kmeans = kmeans(
 head(country_kmeans)
 ```
 
-**Evaluate Cluster Quality**
+**Evaluate Cluster Quality**  
 ```{r echo=FALSE}
 # ----- Evaluate the quality of the clustering -----
 
@@ -287,12 +288,10 @@ cluster_df$clusters <- as.factor(cluster_df$clusters)
 head(cluster_df)
 ```
 
-We created K-means model with 2 centers but the variance explained was low at 0.3935. Before we are going to do hyperparameter tuning, we are first going to visualize our model to see how it looks.
-
 ### Step 7 — Visualize Clusters
-...  
+The visualized socio-economic clusters looks great. But since it only has 2 clusters, it does not give us too much detail and result may look too generalized as the second cluster only had countries from Africa and some from Asia. We wanted to narrow down further to get better idea on which countries have the direst need for aid.  
 
-**Load Map Data**
+**Load Map Data**  
 ```{r echo=FALSE}
 # Load Map Data
 map.world <- map_data("world")
@@ -326,7 +325,7 @@ map.world_joined <- map.world_joined %>% drop_na(clusters)
 head(map.world_joined)
 ```
 
-**Visualize Socio-Economic Clusters**
+**Visualize Socio-Economic Clusters**  
 ```{r echo=FALSE}
 # Plot World Map
 ggplot() +
@@ -349,10 +348,8 @@ ggplot() +
   )
 ```
 
-The visualized socio-economic clusters looks great. But since it only has 2 clusters, it does not give us too much detail and result may look too generalized as the second cluster only had countries from Africa and some from Asia. We wanted to narrow down further to get better idea on which countries need the direst need of aids.
-
 ### Step 8 — Hyperparameter Tuning
-... 
+We used few different metrics to determine the best number of clusters. Both from the elbow chart and NbClust gave us 3 as the best number of clusters to used. Therefore, we will be retrain the model with 3 centers.  
 
 **Elbow Method**  
 ```{r include=FALSE}
@@ -418,10 +415,10 @@ ggplot(freq_k_,
        title = "Cluster Analysis")
 ```
 
-We used few different metrics to determine the best number of clusters. Both from the elbow chart and NbClust gave us 3 as the best number of clusters to used. Therefore, we will be retrain the model with 3 centers.
-
 ### Step 9 — Final Model (k=3)
-...  
+Variance explained has increased to 0.5479977, which is a lot better than the previous model (0.3935). We will visualized the clusters to the result to see if we need more tuning.  
+
+The graph gives us more detail on breaking down the countries with their socio-economic status. However, it appears that the countries with lower socio-economic status remains the same (majority of them are from Africa and some Asia). Therefore, we determined that the output of the model would not improve any further with our current dataset and decided to use this as our final model. We will be visualize the model in 3D to determine the 10 countries that need the aids the most.  
 
 ```{r}
 final_kmeans <- kmeans(
@@ -437,7 +434,7 @@ final_kmeans <- kmeans(
 head(final_kmeans)
 ```
 
-**Evaluate Cluster Quality**
+**Evaluate Cluster Quality**  
 ```{r echo=FALSE}
 # ----- Evaluate the quality of the clustering -----
 
@@ -451,8 +448,6 @@ denom_ = final_kmeans$totss
 var_exp_ = num_ / denom_
 cat('Variance Explained:', var_exp_)
 ```
-
-Variance explained has increased to 0.5479977, which is a lot better than the previous model (0.3935). We will visualized the clusters to the result to see if we need more tuning.
 
 ```{r include=FALSE}
 # Create Cluster Data set
@@ -473,7 +468,7 @@ map.world_joined <- map.world_joined %>% drop_na(clusters)
 head(map.world_joined)
 ```
 
-**Visualize Socio-Economic Clusters**
+**Visualize Socio-Economic Clusters**  
 ```{r echo=FALSE}
 # Plot World Map
 ggplot() +
@@ -496,10 +491,9 @@ ggplot() +
   )
 ```
 
-The graph gives us more detail on breaking down the countries with their socio-economic status. However, it appears that the countries with lower socio-economic status remains the same (majority of them are from Africa and some Asia). Therefore, we determined that the output of the model would not improve any further with our current dataset and decided to use this as our final model. We will be visualize the model in 3D to determine the 10 countries that need the aids the most.
-
 ### Step 10 — Visualize 3D Clusters
-...  
+In order to further visualize the K-Means clusters, we used plotly to create a 3D visual on the basis of income, life expectancy, and GDP per Capita. As brielfy mentioned before, these variables highly correlated to each other and clearly illustrate the breakdown of the clusters. The purple data points represent more underdeveloped nations, the orange represents developing nations, and the green represents the developed nations. Beyond correlation, our group thought these variables made the most sense considering each's importance to a nation's wellbeing.  
+
 ```{r include=FALSE}
 # Add Clusters as Factor Column to Data Set
 clusters = as.factor(final_kmeans$cluster)
@@ -533,10 +527,12 @@ fig
 ```
 
 ## CONCLUSION
-In conclusion, the 10 countries that need the direst need of aid we selected are: Haiti, Central African Republic, Lesotho, Malawi, Zambia, Mozambique, Sierra Leone, Guinea-Bissau, Afghanistan, and Uganda. These countries have the lowest net income per person, life expectancy, and the GDP per capita. 
+In conclusion, the 10 countries that need the direst need of aid we selected are: Haiti, Central African Republic, Lesotho, Malawi, Zambia, Mozambique, Sierra Leone, Guinea-Bissau, Afghanistan, and Uganda. These countries have the lowest net income per person, life expectancy, and the GDP per capita.  
 
-## Future work
-While we were building the model, we factored in net income per person, life expectancy, and the GDP per capita as the vital variables in deciding a socio-economic status of a country. However, there might be other variables that might be considered more important. Also, building another model with the output from our cluster might give us more accurate outcome.
+Our K-Means model performed pretty well and was able to capture distinct clusters of nations. Furthermore, the consensus of three clusters for the final model makes a lot of sense, as nations can generally be classified as underdeveloped, developing, or developed. Although the explained variance of our model wasn't incredibly high, we are happy with the model's performance and believe it definitely provides a lot of value. Recognizing and visualizing the disparity in the wellbeing of nations is a necessary step to providing aid.  
+
+## FUTURE WORK
+While we were building the model, we factored in net income per person, life expectancy, and the GDP per capita as the vital variables in deciding a socio-economic status of a country. However, there might be other variables that might be considered more important. Also, building another model with the output from our cluster might give us more accurate outcome.  
 
 ## REFERENCES{.tabset}
 
