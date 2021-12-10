@@ -1,7 +1,7 @@
 ---
 title: "DS3001 Final Project"
 author: "Joseph Lee (sl5nj), Iain Muir (iam9ez), Kent Williams (kbw3bb)"
-date: "12/7/2021"
+date: "12/8/2021"
 output:
   html_document:
     toc: TRUE
@@ -244,9 +244,10 @@ head(countries)
 ```
 
 ## K-MEANS CLUSTERING
-We decided to use K-Means Clustering because our goal is to categorize the countries using socio-economic and health factors that determine the overall development of the country.  
+We decided to use K-Means Clustering because our goal is to categorize the countries using socio-economic and health factors that determine the overall development of the country.
 
-We created K-means model with 2 centers but the variance explained was low at 0.3935. Before we are going to do hyperparameter tuning, we are first going to visualize our model to see how it looks.  
+Initially, we created K-means model with 2 centers because we expected the clusters will be divided into two groups: developed countries and underdeveloped countries. However, the variance explained was low at 0.3935. Before we are going to do hyperparameter tuning, we are first going to visualize our model to see how it looks.
+
 
 ### Step 6 — Initial K-Means Model
 ```{r include=FALSE}
@@ -532,11 +533,11 @@ fig
 ```
 
 ## CONCLUSION
-In conclusion, the 10 countries that need the direst need of aid we selected are: Haiti, Central African Republic, Lesotho, Malawi, Zambia, Mozambique, Sierra Leone, Guinea-Bissau, Afghanistan, and Uganda. These countries have the lowest net income per person, life expectancy, and the GDP per capita; furthermore, as made evident by the graph above, they are all in the underdeveloped cluster.
+In conclusion, the 10 countries that need the direst need of aid we selected are: Haiti, Central African Republic, Lesotho, Malawi, Zambia, Mozambique, Sierra Leone, Guinea-Bissau, Afghanistan, and Uganda. These countries have the lowest net income per person, life expectancy, and the GDP per capita; furthermore, as made evident by the graph above, they are all in the underdeveloped cluster.  
 
-Our K-Means model performed pretty well and was able to capture distinct clusters of nations. Furthermore, the consensus of three clusters for the final model makes a lot of sense, as nations can generally be classified as underdeveloped, developing, or developed. Although the explained variance of our model wasn't incredibly high, this is expedited for a limited number of clusters as the model is grouping continents of countries and countries that are on completely opposite ends of the Earth. In order to effectively maximize the explainced variance of our model, we would need to significantly increase the number of clusers; this would inevitably lead to overfitting and an unnecessary amount of complexity in the model.  
+Our K-Means model performed pretty well and was able to capture distinct clusters of nations. Furthermore, the consensus of three clusters for the final model makes a lot of sense, as nations can generally be classified as underdeveloped, developing, or developed. Although the explained variance of our model wasn't incredibly high, this is expedited for a limited number of clusters as the model is grouping continents of countries and countries that are on completely opposite ends of the Earth. In order to effectively maximize the explainced variance of our model, we would need to significantly increase the number of clusers; this would inevitably lead to overfitting and an unnecessary amount of complexity in the model.   
 
-Overall, we are happy with the model's performance and believe it definitely provides a lot of value. Recognizing and visualizing the disparity in the wellbeing of nations is a necessary step to providing aid.  
+Overall, we are happy with the model's performance and believe it definitely provides a lot of value. Recognizing and visualizing the disparity in the wellbeing of nations is a necessary step to providing aid. 
 
 ## FAIRNESS ASSESSMENT
 Our data set does not include any protected classes and therefore we will not be conducting a fairness assessment. That being said, it is important to note that each country inherently has a wide variety of demographic information.  
@@ -546,7 +547,7 @@ While we were building the model, we factored in net income per person, life exp
 
 Additionally, attempting to build a variety of unsupervised learning algorithms might have proved to produce better results. Although K-Means is likely one of the best algorithms for a clustering problem like this, there are definitely multiple other options. For example, algorithms like DBSCAN could potentially work as well.  
 
-Lastly, we definitely could benefit from more data for training. Yet, unlike many other machine learning problems where more data could be collected, there are a finite number of countries that can be used at data points. Therefore, we could experiment with feature engineering with the existing columns, or look for different features all together that we believe are relevant to the wellbeing of a country.
+Lastly, we definitely could benefit from more data for training. Yet, unlike many other machine learning problems where more data could be collected, there are a finite number of countries that can be used at data points. Therefore, we could experiment with feature engineering with the existing columns, or look for different features all together that we believe are relevant to the wellbeing of a country.  
 
 
 ## REFERENCES{.tabset}
